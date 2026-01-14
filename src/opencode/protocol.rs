@@ -38,13 +38,28 @@ impl Protocol for OpenCodeProtocol {
         match &command.target {
             CommandTarget::Server => format!("{} {}", command.command, command.args.join(" ")),
             CommandTarget::Session(session_id) => {
-                format!("{} -t {} {}", command.command, session_id.0, command.args.join(" "))
+                format!(
+                    "{} -t {} {}",
+                    command.command,
+                    session_id.0,
+                    command.args.join(" ")
+                )
             }
             CommandTarget::Window(window_id) => {
-                format!("{} -t {} {}", command.command, window_id.0, command.args.join(" "))
+                format!(
+                    "{} -t {} {}",
+                    command.command,
+                    window_id.0,
+                    command.args.join(" ")
+                )
             }
             CommandTarget::Pane(pane_id) => {
-                format!("{} -t {} {}", command.command, pane_id.0, command.args.join(" "))
+                format!(
+                    "{} -t {} {}",
+                    command.command,
+                    pane_id.0,
+                    command.args.join(" ")
+                )
             }
         }
     }
@@ -115,7 +130,9 @@ fn extract_tool_calls(output: &str) -> Vec<ToolCall> {
 fn extract_content(output: &str) -> String {
     output
         .lines()
-        .filter(|line| !line.starts_with("Running: ") && !line.starts_with("<") && !line.starts_with("</"))
+        .filter(|line| {
+            !line.starts_with("Running: ") && !line.starts_with("<") && !line.starts_with("</")
+        })
         .collect::<Vec<_>>()
         .join("\n")
         .trim()
@@ -139,10 +156,7 @@ impl OpenCodeProtocol {
         Command {
             command: "send-keys".to_string(),
             target: CommandTarget::Pane(pane_id.clone()),
-            args: vec![
-                prompt.to_string(),
-                "Enter".to_string(),
-            ],
+            args: vec![prompt.to_string(), "Enter".to_string()],
         }
     }
 
@@ -160,11 +174,7 @@ impl OpenCodeProtocol {
     }
 
     pub fn format_write_command(&self, path: &str, content: &str) -> String {
-        format!(
-            "Writing file: {} ({} bytes)",
-            path,
-            content.len()
-        )
+        format!("Writing file: {} ({} bytes)", path, content.len())
     }
 }
 

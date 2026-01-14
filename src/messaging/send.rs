@@ -2,9 +2,9 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use crate::types::{PaneId, SessionId};
-use crate::error::TmuxError;
 use crate::Result;
+use crate::error::TmuxError;
+use crate::types::{PaneId, SessionId};
 
 const PROMPT_INPUT_SUFFIX: &str = ".prompt.input";
 const PROMPT_DIR: &str = ".opencode/prompts";
@@ -30,7 +30,8 @@ impl MessageSender {
     }
 
     fn pane_prompt_file(&self, pane_id: &PaneId) -> PathBuf {
-        self.prompt_dir().join(format!("{}{}", pane_id.0, PROMPT_INPUT_SUFFIX))
+        self.prompt_dir()
+            .join(format!("{}{}", pane_id.0, PROMPT_INPUT_SUFFIX))
     }
 
     pub fn send_prompt(&self, pane_id: &PaneId, prompt: &str) -> Result<()> {
@@ -137,17 +138,13 @@ impl FileLock {
             fs::create_dir_all(parent)?;
         }
 
-        let file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(path)?;
+        let file = OpenOptions::new().write(true).create(true).open(path)?;
 
         #[cfg(unix)]
         {
             use std::os::fd::AsRawFd;
-            let flock_result = unsafe {
-                libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB)
-            };
+            let flock_result =
+                unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) };
             if flock_result != 0 {
                 return Err(TmuxError::Process(
                     std::io::ErrorKind::WouldBlock,

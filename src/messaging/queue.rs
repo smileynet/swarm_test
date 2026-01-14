@@ -4,10 +4,10 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use crate::types::{SessionId, PaneId, Message, Command};
-use crate::error::TmuxError;
-use crate::Result;
 use super::send::{MessageSender, PromptMetadata};
+use crate::Result;
+use crate::error::TmuxError;
+use crate::types::{Command, Message, PaneId, SessionId};
 
 const QUEUE_DIR: &str = ".opencode/queue";
 const MESSAGE_FILE_SUFFIX: &str = ".msg";
@@ -39,7 +39,10 @@ impl MessageQueue {
     }
 
     fn message_file(&self, session_id: &SessionId, message_id: &str) -> PathBuf {
-        self.queue_dir().join(format!("{}-{}{}", session_id.0, message_id, MESSAGE_FILE_SUFFIX))
+        self.queue_dir().join(format!(
+            "{}-{}{}",
+            session_id.0, message_id, MESSAGE_FILE_SUFFIX
+        ))
     }
 
     pub fn enqueue_message(&self, message: Message) -> Result<()> {
@@ -99,7 +102,11 @@ impl MessageQueue {
             crate::types::CommandTarget::Pane(ref pane_id) => {
                 format!("send-keys -t {} {}", pane_id.0, command.command)
             }
-            _ => return Err(TmuxError::InvalidState("Command target not supported".to_string())),
+            _ => {
+                return Err(TmuxError::InvalidState(
+                    "Command target not supported".to_string(),
+                ));
+            }
         };
 
         self.send_message(session_id, &command_str)
@@ -114,7 +121,8 @@ impl MessageQueue {
         let pane_id = PaneId(format!("{}:0.0", session_id.0));
         let metadata = PromptMetadata::new(session_id.clone(), agent.to_string());
 
-        self.sender.send_prompt_with_metadata(&pane_id, prompt, &metadata)?;
+        self.sender
+            .send_prompt_with_metadata(&pane_id, prompt, &metadata)?;
 
         self.send_message(session_id, prompt)
     }
@@ -253,8 +261,8 @@ impl MessageQueue {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::{Message, PaneId};
     use tempfile::TempDir;
-    use crate::types::{PaneId, Message};
 
     #[test]
     fn test_enqueue_message() {

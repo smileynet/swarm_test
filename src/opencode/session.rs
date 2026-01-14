@@ -1,6 +1,6 @@
 use crate::Result;
-use crate::types::{Session, SessionId, PaneId};
-use crate::opencode::protocol::{OpenCodeProtocol, AgentResponse, MessageType, Protocol};
+use crate::opencode::protocol::{AgentResponse, MessageType, OpenCodeProtocol, Protocol};
+use crate::types::{PaneId, Session, SessionId};
 use std::sync::{Arc, Mutex};
 
 pub struct OpenCodeSession {

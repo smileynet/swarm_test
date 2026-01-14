@@ -1,5 +1,5 @@
-mod session;
 mod protocol;
+mod session;
 
-pub use session::*;
 pub use protocol::*;
+pub use session::*;

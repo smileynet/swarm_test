@@ -1,24 +1,22 @@
-use crate::{Result, TmuxError};
-use crate::types::{Command, CommandTarget, ResponseData, Window, WindowId, SessionId};
 use crate::tmux::cli::execute_command;
+use crate::types::{Command, CommandTarget, ResponseData, SessionId, Window, WindowId};
+use crate::{Result, TmuxError};
 
 pub fn new_window(session_id: &SessionId, name: impl Into<String>) -> Result<Window> {
     let name = name.into();
     let cmd = Command {
         command: "new-window".to_string(),
         target: CommandTarget::Session(session_id.clone()),
-        args: vec![
-            "-n".to_string(),
-            name.clone(),
-            "-d".to_string(),
-        ],
+        args: vec!["-n".to_string(), name.clone(), "-d".to_string()],
     };
 
     let response = execute_command(&cmd)?;
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to create window".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to create window".to_string()),
         ));
     }
 
@@ -40,7 +38,9 @@ pub fn kill_window(window_id: &WindowId) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to kill window".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to kill window".to_string()),
         ));
     }
 
@@ -51,14 +51,19 @@ pub fn list_windows(session_id: &SessionId) -> Result<Vec<Window>> {
     let cmd = Command {
         command: "list-windows".to_string(),
         target: CommandTarget::Session(session_id.clone()),
-        args: vec!["-F".to_string(), "#{window_id}:#{window_name}:#{window_active}".to_string()],
+        args: vec![
+            "-F".to_string(),
+            "#{window_id}:#{window_name}:#{window_active}".to_string(),
+        ],
     };
 
     let response = execute_command(&cmd)?;
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to list windows".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to list windows".to_string()),
         ));
     }
 
@@ -114,7 +119,9 @@ pub fn select_window(window_id: &WindowId) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to select window".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to select window".to_string()),
         ));
     }
 
@@ -133,7 +140,9 @@ pub fn rename_window(window_id: &WindowId, new_name: impl Into<String>) -> Resul
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to rename window".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to rename window".to_string()),
         ));
     }
 
@@ -151,7 +160,9 @@ pub fn last_window(session_id: &SessionId) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to switch to last window".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to switch to last window".to_string()),
         ));
     }
 
@@ -169,7 +180,9 @@ pub fn next_window(session_id: &SessionId) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to switch to next window".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to switch to next window".to_string()),
         ));
     }
 
@@ -186,9 +199,9 @@ pub fn previous_window(session_id: &SessionId) -> Result<()> {
     let response = execute_command(&cmd)?;
 
     if !response.success {
-        return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to switch to previous window".to_string()),
-        ));
+        return Err(TmuxError::Command(response.error.unwrap_or_else(|| {
+            "Failed to switch to previous window".to_string()
+        })));
     }
 
     Ok(())

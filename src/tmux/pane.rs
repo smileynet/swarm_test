@@ -1,6 +1,6 @@
-use crate::{Result, TmuxError};
-use crate::types::{Command, CommandTarget, ResponseData, Pane, PaneId, WindowId, SessionId};
 use crate::tmux::cli::execute_command;
+use crate::types::{Command, CommandTarget, Pane, PaneId, ResponseData, SessionId, WindowId};
+use crate::{Result, TmuxError};
 
 pub fn new_pane(window_id: &WindowId) -> Result<Pane> {
     let cmd = Command {
@@ -13,7 +13,9 @@ pub fn new_pane(window_id: &WindowId) -> Result<Pane> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to create pane".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to create pane".to_string()),
         ));
     }
 
@@ -34,9 +36,9 @@ pub fn split_pane_horizontal(window_id: &WindowId) -> Result<Pane> {
     let response = execute_command(&cmd)?;
 
     if !response.success {
-        return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to split pane horizontally".to_string()),
-        ));
+        return Err(TmuxError::Command(response.error.unwrap_or_else(|| {
+            "Failed to split pane horizontally".to_string()
+        })));
     }
 
     let panes = list_panes(window_id)?;
@@ -57,7 +59,9 @@ pub fn kill_pane(pane_id: &PaneId) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to kill pane".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to kill pane".to_string()),
         ));
     }
 
@@ -80,7 +84,9 @@ pub fn list_panes(window_id: &WindowId) -> Result<Vec<Pane>> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to list panes".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to list panes".to_string()),
         ));
     }
 
@@ -141,7 +147,9 @@ pub fn send_keys(pane_id: &PaneId, keys: impl AsRef<str>) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to send keys".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to send keys".to_string()),
         ));
     }
 
@@ -165,7 +173,9 @@ pub fn capture_pane_output(pane_id: &PaneId) -> Result<String> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to capture pane output".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to capture pane output".to_string()),
         ));
     }
 
@@ -186,7 +196,9 @@ pub fn capture_pane_start(pane_id: &PaneId, lines: usize) -> Result<String> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to capture pane output".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to capture pane output".to_string()),
         ));
     }
 
@@ -207,7 +219,9 @@ pub fn select_pane(pane_id: &PaneId) -> Result<()> {
 
     if !response.success {
         return Err(TmuxError::Command(
-            response.error.unwrap_or_else(|| "Failed to select pane".to_string()),
+            response
+                .error
+                .unwrap_or_else(|| "Failed to select pane".to_string()),
         ));
     }
 
@@ -226,7 +240,9 @@ pub fn resize_pane(pane_id: &PaneId, width: Option<usize>, height: Option<usize>
 
         if !response.success {
             return Err(TmuxError::Command(
-                response.error.unwrap_or_else(|| "Failed to resize pane width".to_string()),
+                response
+                    .error
+                    .unwrap_or_else(|| "Failed to resize pane width".to_string()),
             ));
         }
     }
@@ -242,7 +258,9 @@ pub fn resize_pane(pane_id: &PaneId, width: Option<usize>, height: Option<usize>
 
         if !response.success {
             return Err(TmuxError::Command(
-                response.error.unwrap_or_else(|| "Failed to resize pane height".to_string()),
+                response
+                    .error
+                    .unwrap_or_else(|| "Failed to resize pane height".to_string()),
             ));
         }
     }

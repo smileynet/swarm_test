@@ -1,9 +1,9 @@
 mod cli;
+pub mod pane;
 pub mod session;
 pub mod window;
-pub mod pane;
 
 pub use cli::*;
+pub use pane::*;
 pub use session::*;
 pub use window::*;
-pub use pane::*;

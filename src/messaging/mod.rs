@@ -1,7 +1,7 @@
-pub mod send;
-pub mod read;
 pub mod queue;
+pub mod read;
+pub mod send;
 
-pub use send::{MessageSender, PromptMetadata, FileLock};
+pub use queue::{MessageQueue, QueueStats, QueuedMessage};
 pub use read::LogReader;
-pub use queue::{MessageQueue, QueuedMessage, QueueStats};
+pub use send::{FileLock, MessageSender, PromptMetadata};

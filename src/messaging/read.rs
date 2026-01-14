@@ -1,5 +1,5 @@
-use crate::types::{SessionId, PaneId};
 use crate::error::TmuxError;
+use crate::types::{PaneId, SessionId};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -23,7 +23,7 @@ impl LogReader {
 
     pub fn read_log(&self, session_id: &SessionId) -> Result<String, TmuxError> {
         let log_path = self.session_log_path(session_id);
-        
+
         if !log_path.exists() {
             return Ok(String::new());
         }
@@ -34,26 +34,31 @@ impl LogReader {
 
     pub fn read_log_lines(&self, session_id: &SessionId) -> Result<Vec<String>, TmuxError> {
         let log_path = self.session_log_path(session_id);
-        
+
         if !log_path.exists() {
             return Ok(Vec::new());
         }
 
         let file = File::open(&log_path)?;
         let reader = BufReader::new(file);
-        Ok(reader.lines()
+        Ok(reader
+            .lines()
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| TmuxError::Command(format!("Failed to read log lines: {}", e)))?)
     }
 
-    pub fn read_log_from(&self, session_id: &SessionId, offset: usize) -> Result<Vec<String>, TmuxError> {
+    pub fn read_log_from(
+        &self,
+        session_id: &SessionId,
+        offset: usize,
+    ) -> Result<Vec<String>, TmuxError> {
         let lines = self.read_log_lines(session_id)?;
         Ok(lines.into_iter().skip(offset).collect())
     }
 
     pub fn read_pane_output(&self, pane_id: &PaneId) -> Result<String, TmuxError> {
         let pane_log_path = self.pane_log_path(pane_id);
-        
+
         if !pane_log_path.exists() {
             return Ok(String::new());
         }
@@ -67,9 +72,12 @@ impl LogReader {
         F: Fn(&str) + Send + Sync,
     {
         let log_path = self.session_log_path(session_id);
-        
+
         if !log_path.exists() {
-            return Err(TmuxError::NotFound(format!("Log file does not exist: {:?}", log_path)));
+            return Err(TmuxError::NotFound(format!(
+                "Log file does not exist: {:?}",
+                log_path
+            )));
         }
 
         let file = File::open(&log_path)?;
@@ -93,24 +101,26 @@ impl LogReader {
 
     pub fn get_log_size(&self, session_id: &SessionId) -> Result<u64, TmuxError> {
         let log_path = self.session_log_path(session_id);
-        
+
         if !log_path.exists() {
             return Ok(0);
         }
 
-        Ok(log_path.metadata()
+        Ok(log_path
+            .metadata()
             .map(|m| m.len())
             .map_err(|e| TmuxError::Command(format!("Failed to get log size: {}", e)))?)
     }
 
     pub fn get_log_timestamp(&self, session_id: &SessionId) -> Result<u64, TmuxError> {
         let log_path = self.session_log_path(session_id);
-        
+
         if !log_path.exists() {
             return Ok(0);
         }
 
-        log_path.metadata()
+        log_path
+            .metadata()
             .map_err(|e| TmuxError::Command(format!("Failed to get log metadata: {}", e)))?
             .modified()
             .map_err(|e| TmuxError::Command(format!("Failed to get log timestamp: {}", e)))?
@@ -122,7 +132,7 @@ impl LogReader {
     pub fn tail_log(&self, session_id: &SessionId, n: usize) -> Result<Vec<String>, TmuxError> {
         let lines = self.read_log_lines(session_id)?;
         let len = lines.len();
-        
+
         if n >= len {
             return Ok(lines);
         }
@@ -130,24 +140,29 @@ impl LogReader {
         Ok(lines.into_iter().skip(len - n).collect())
     }
 
-    pub fn search_log(&self, session_id: &SessionId, pattern: &str) -> Result<Vec<String>, TmuxError> {
+    pub fn search_log(
+        &self,
+        session_id: &SessionId,
+        pattern: &str,
+    ) -> Result<Vec<String>, TmuxError> {
         let lines = self.read_log_lines(session_id)?;
-        
-        Ok(lines.into_iter()
+
+        Ok(lines
+            .into_iter()
             .filter(|line| line.contains(pattern))
             .collect())
     }
 
     pub fn clear_log(&self, session_id: &SessionId) -> Result<(), TmuxError> {
         let log_path = self.session_log_path(session_id);
-        
+
         fs::write(&log_path, "")
             .map_err(|e| TmuxError::Command(format!("Failed to clear log: {}", e)))
     }
 
     pub fn delete_log(&self, session_id: &SessionId) -> Result<(), TmuxError> {
         let log_path = self.session_log_path(session_id);
-        
+
         if !log_path.exists() {
             return Ok(());
         }
@@ -165,7 +180,7 @@ impl LogReader {
             .map_err(|e| TmuxError::Command(format!("Failed to read log directory: {}", e)))?;
 
         let mut sessions = Vec::new();
-        
+
         for entry in entries.flatten() {
             if let Ok(name) = entry.file_name().into_string() {
                 if name.starts_with("session_") && name.ends_with(".log") {
@@ -173,7 +188,7 @@ impl LogReader {
                         .strip_prefix("session_")
                         .and_then(|s| s.strip_suffix(".log"))
                         .map(String::from);
-                    
+
                     if let Some(id) = session_id {
                         sessions.push(SessionId(id));
                     }

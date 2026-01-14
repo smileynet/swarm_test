@@ -1,5 +1,5 @@
-use crate::{Result, TmuxError};
 use crate::types::{Command, CommandTarget, Response, ResponseData};
+use crate::{Result, TmuxError};
 use std::process::{Command as StdCommand, Output};
 use std::time::Duration;
 
@@ -70,20 +70,18 @@ impl TmuxCommand {
 
     pub fn execute(&self) -> Result<Response> {
         let args = self.build_args();
-        let output = StdCommand::new("tmux")
-            .args(&args)
-            .output()
-            .map_err(|e| TmuxError::Process(e.kind(), format!("Failed to execute tmux command: {e}")))?;
+        let output = StdCommand::new("tmux").args(&args).output().map_err(|e| {
+            TmuxError::Process(e.kind(), format!("Failed to execute tmux command: {e}"))
+        })?;
 
         self.parse_output(output)
     }
 
     pub fn execute_with_timeout(&self, timeout: Duration) -> Result<Response> {
         let args = self.build_args();
-        let mut child = StdCommand::new("tmux")
-            .args(&args)
-            .spawn()
-            .map_err(|e| TmuxError::Process(e.kind(), format!("Failed to spawn tmux command: {e}")))?;
+        let mut child = StdCommand::new("tmux").args(&args).spawn().map_err(|e| {
+            TmuxError::Process(e.kind(), format!("Failed to spawn tmux command: {e}"))
+        })?;
 
         let start = std::time::Instant::now();
 
@@ -95,16 +93,19 @@ impl TmuxCommand {
 
             match child.try_wait() {
                 Ok(Some(_)) => {
-                    let output = child
-                        .wait_with_output()
-                        .map_err(|e| TmuxError::Process(e.kind(), format!("Failed to get tmux output: {e}")))?;
+                    let output = child.wait_with_output().map_err(|e| {
+                        TmuxError::Process(e.kind(), format!("Failed to get tmux output: {e}"))
+                    })?;
                     return self.parse_output(output);
                 }
                 Ok(None) => {
                     std::thread::sleep(Duration::from_millis(10));
                 }
                 Err(e) => {
-                    return Err(TmuxError::Process(e.kind(), format!("Failed to check process status: {e}")));
+                    return Err(TmuxError::Process(
+                        e.kind(),
+                        format!("Failed to check process status: {e}"),
+                    ));
                 }
             }
         }
@@ -123,7 +124,8 @@ impl TmuxCommand {
 
             if error_msg.contains("not found") || error_msg.contains("no such") {
                 Err(TmuxError::NotFound(error_msg))
-            } else if error_msg.contains("not connected") || error_msg.contains("no server running") {
+            } else if error_msg.contains("not connected") || error_msg.contains("no server running")
+            {
                 Err(TmuxError::NotConnected)
             } else {
                 Err(TmuxError::Command(error_msg))
@@ -153,24 +155,18 @@ pub fn execute_command(cmd: &Command) -> Result<Response> {
         CommandTarget::Server => TmuxCommand::new()
             .command(cmd.command.clone())
             .args(&cmd.args),
-        CommandTarget::Session(session_id) => {
-            TmuxCommand::new()
-                .command(cmd.command.clone())
-                .session(session_id.0.clone())
-                .args(&cmd.args)
-        }
-        CommandTarget::Window(window_id) => {
-            TmuxCommand::new()
-                .command(cmd.command.clone())
-                .arg(format!("-t{}", window_id.0))
-                .args(&cmd.args)
-        }
-        CommandTarget::Pane(pane_id) => {
-            TmuxCommand::new()
-                .command(cmd.command.clone())
-                .arg(format!("-t{}", pane_id.0))
-                .args(&cmd.args)
-        }
+        CommandTarget::Session(session_id) => TmuxCommand::new()
+            .command(cmd.command.clone())
+            .session(session_id.0.clone())
+            .args(&cmd.args),
+        CommandTarget::Window(window_id) => TmuxCommand::new()
+            .command(cmd.command.clone())
+            .arg(format!("-t{}", window_id.0))
+            .args(&cmd.args),
+        CommandTarget::Pane(pane_id) => TmuxCommand::new()
+            .command(cmd.command.clone())
+            .arg(format!("-t{}", pane_id.0))
+            .args(&cmd.args),
     };
 
     tmux_cmd.execute()
