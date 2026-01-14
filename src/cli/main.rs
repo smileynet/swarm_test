@@ -1,6 +1,6 @@
+use super::commands;
 use std::env;
 use std::process;
-use super::commands;
 use swarm_test::Result;
 
 pub fn run() -> Result<()> {
