@@ -65,74 +65,26 @@ pub fn kill_pane(pane_id: &PaneId) -> Result<()> {
         ));
     }
 
-    Ok(())
+        Ok(())
 }
 
-pub fn list_panes(window_id: &WindowId) -> Result<Vec<Pane>> {
-    let session_id = extract_session_id_from_window(window_id)?;
-
-    let cmd = Command {
-        command: "list-panes".to_string(),
-        target: CommandTarget::Window(window_id.clone()),
-        args: vec![
-            "-F".to_string(),
-            "#{pane_id}:#{pane_current_path}:#{pane_pid}:#{pane_active}".to_string(),
-        ],
-    };
-
-    let response = execute_command(&cmd)?;
-
-    if !response.success {
-        return Err(TmuxError::Command(
-            response
-                .error
-                .unwrap_or_else(|| "Failed to list panes".to_string()),
-        ));
-    }
-
-    match response.data {
-        ResponseData::Output(output) => {
-            if output.trim().is_empty() {
-                return Ok(Vec::new());
+pub fn find_pane_by_session_name(session_name: &str) -> Result<Option<Pane>> {
+    // Get all sessions and find the matching session
+    use crate::tmux::session::list_sessions;
+    
+    let sessions = list_sessions()?;
+    let matching_session = sessions.iter().find(|s| s.name == session_name);
+    
+    match matching_session {
+        Some(session) => {
+            // Get panes from the first window
+            if let Some(first_window) = session.windows.first() {
+                let panes = list_panes(first_window)?;
+                return Ok(panes.first().cloned());
             }
-
-            let mut panes = Vec::new();
-            for line in output.lines() {
-                let parts: Vec<&str> = line.split(':').collect();
-                if parts.len() >= 4 {
-                    let id = PaneId(parts[0].to_string());
-                    let current_path = if parts[1].is_empty() {
-                        None
-                    } else {
-                        Some(parts[1].to_string())
-                    };
-                    let pid = parts[2].parse::<u32>().ok();
-                    let active: bool = parts[3] != "0";
-
-                    panes.push(Pane {
-                        id,
-                        window_id: window_id.clone(),
-                        session_id: session_id.clone(),
-                        current_path,
-                        pid,
-                        active,
-                    });
-                }
-            }
-
-            Ok(panes)
         }
-        _ => Ok(Vec::new()),
+        None => Ok(None)
     }
-}
-
-pub fn get_pane(pane_id: &PaneId) -> Result<Pane> {
-    let window_id = extract_window_id(pane_id)?;
-    let panes = list_panes(&window_id)?;
-    panes
-        .into_iter()
-        .find(|p| p.id == *pane_id)
-        .ok_or_else(|| TmuxError::NotFound(format!("Pane '{}' not found", pane_id.0)))
 }
 
 pub fn send_keys(pane_id: &PaneId, keys: impl AsRef<str>) -> Result<()> {
